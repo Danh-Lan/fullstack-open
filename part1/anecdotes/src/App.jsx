@@ -31,6 +31,7 @@ const App = () => {
       <button type='button' onClick={() => setSelected(Math.floor(Math.random() * anecdotes.length))}>next anecdote</button>
       <h1>Anecdote with most votes</h1>
       <p>{anecdotes[mostVoteAnecdoteIndex]}</p>
+      <p>has {votes[mostVoteAnecdoteIndex]} votes</p>
     </div>
   )
 }
