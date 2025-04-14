@@ -3,12 +3,15 @@ import personsService from './services/persons'
 import Filter from './components/Filter'
 import PersonForm from './components/PersonForm'
 import Persons from './components/Persons'
+import Notification from './components/Notification'
 
 const App = () => {
   const [persons, setPersons] = useState([])
   const [newName, setNewName] = useState('')
   const [newNumber, setNewNumber] = useState('')
   const [nameFilter, setNameFilter] = useState('')
+  const [notification, setNotification] = useState(null);
+  const [notificationType, setNotificationType] = useState(null);
 
   useEffect(() => {
     personsService
@@ -41,8 +44,10 @@ const App = () => {
 
         handleUpdatePerson(personToUpdate.id, updatedPerson);
 
-        return;
+        handleUpdateNotification(`Updated ${newName}'s number`, 'success');
       }
+
+      return;
     }
 
     const newPerson = {
@@ -55,6 +60,8 @@ const App = () => {
       .then((returnedPerson) => {
         setPersons([...persons, returnedPerson])
       })
+
+    handleUpdateNotification(`Added ${newName}`, 'success');
   };
 
   const personExist = function(name) {
@@ -68,7 +75,14 @@ const App = () => {
         setPersons(persons.map(person => (person.id === id ? returnedPerson : person)))
       })
       .catch(error => {
-        alert(`${updatedPerson.name} was already removed from the server`);
+        // alert(`${updatedPerson.name} was already removed from the server`);
+        setNotification(`Information of ${updatedPerson.name} has already been removed from server`);
+        setNotificationType('error');
+        setTimeout(() => {
+          setNotification(null);
+          setNotificationType(null);
+        }
+        , 3000);
         setPersons(persons.filter(person => (person.id !== id)))
       })
   }
@@ -81,15 +95,25 @@ const App = () => {
           setPersons(persons.filter(person => (person.id !== id)))
         )
         .catch(error => {
-          alert(`${name} was already removed from the server`);
+          handleUpdateNotification(`Information of ${name} has already been removed from server`, 'error');
           setPersons(persons.filter(person => (person.id !== id)))
         })
     }
   };
 
+  const handleUpdateNotification = (message, type, duration=3000) => {
+    setNotification(message);
+    setNotificationType(type);
+    setTimeout(() => {
+      setNotification(null);
+      setNotificationType(null);
+    }, duration);
+  };
+
   return (
     <div>
       <h2>Phonebook</h2>
+      <Notification message={notification} type={notificationType} />
       <Filter filter={nameFilter} handleFilterChange={handleNameFilterChange} />
       <h3>add a new</h3>
       <PersonForm 
