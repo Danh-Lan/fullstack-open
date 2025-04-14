@@ -22,7 +22,7 @@ const Countries = ({ filteredCountries, setFilteredCountries }) => {
     );
   }
 
-  if (filteredCountries.length == 1) {
+  if (filteredCountries.length === 1) {
     return (
       <Country country={filteredCountries[0]} />
     );
