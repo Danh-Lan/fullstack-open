@@ -43,8 +43,6 @@ const App = () => {
         const updatedPerson = { name: newName, number: newNumber };
 
         handleUpdatePerson(personToUpdate.id, updatedPerson);
-
-        handleUpdateNotification(`Updated ${newName}'s number`, 'success');
       }
 
       return;
@@ -59,9 +57,11 @@ const App = () => {
       .create(newPerson)
       .then((returnedPerson) => {
         setPersons([...persons, returnedPerson])
+        handleUpdateNotification(`Added ${newName}`, 'success');
       })
-
-    handleUpdateNotification(`Added ${newName}`, 'success');
+      .catch(error => {
+        console.log(error.response.data.error);
+      })
   };
 
   const personExist = function(name) {
@@ -73,17 +73,19 @@ const App = () => {
       .update(id, updatedPerson)
       .then(returnedPerson => {
         setPersons(persons.map(person => (person.id === id ? returnedPerson : person)))
+        handleUpdateNotification(`Updated ${returnedPerson.name}'s number`, 'success');
       })
       .catch(error => {
-        // alert(`${updatedPerson.name} was already removed from the server`);
-        setNotification(`Information of ${updatedPerson.name} has already been removed from server`);
-        setNotificationType('error');
-        setTimeout(() => {
-          setNotification(null);
-          setNotificationType(null);
-        }
-        , 3000);
-        setPersons(persons.filter(person => (person.id !== id)))
+        console.log(error.response.data.error);
+        
+        // setNotification(`Information of ${updatedPerson.name} has already been removed from server`);
+        // setNotificationType('error');
+        // setTimeout(() => {
+        //   setNotification(null);
+        //   setNotificationType(null);
+        // }
+        // , 3000);
+        // setPersons(persons.filter(person => (person.id !== id)))
       })
   }
 
