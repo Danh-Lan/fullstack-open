@@ -1,5 +1,5 @@
 const assert = require('node:assert')
-const { test, after, beforeEach } = require('node:test')
+const { test, after, beforeEach, describe } = require('node:test')
 const mongoose = require('mongoose')
 const supertest = require('supertest')
 const app = require('../app')
@@ -8,108 +8,144 @@ const Blog = require('../models/blog')
 
 const api = supertest(app)
 
-beforeEach(async () => {
-  await Blog.deleteMany({})
+describe('when there is initially some blogs saved', () => {
+  beforeEach(async () => {
+    await Blog.deleteMany({})
+    await Blog.insertMany(helpers.initialBlogs)
+  })
 
-  for (let blog of helpers.initialBlogs) {
-    let blogObject = new Blog(blog)
-    await blogObject.save()
-  }
-})
+  test('blogs are returned as json', async () => {
+    await api
+      .get('/api/blogs')
+      .expect(200)
+      .expect('Content-Type', /application\/json/)
+  })
 
-test('blogs are returned as json', async () => {
-  await api
-    .get('/api/blogs')
-    .expect(200)
-    .expect('Content-Type', /application\/json/)
-})
+  test('all blogs contain id', async () => {
+    const blogs = await helpers.blogsInDb()
 
-test('all blogs contain id', async () => {
-  const response = await api.get('/api/blogs')
-  for (let blog of response.body) {
-    assert(blog.hasOwnProperty('id'))
-  }
-})
+    for (let blog of blogs) {
+      assert(blog.hasOwnProperty('id'))
+    }
+  })
 
-test('create a new blog sucessfully', async () => {
-  const newBlog = {
-    title: 'New Blog',
-    author: "Author",
-    url: "https://example.com",
-    likes: 4,
-  }
+  describe('addition of a new blog', () => {
+    test('succeeds with valid data', async () => {
+      const newBlog = {
+        title: 'New Blog',
+        author: "Author",
+        url: "https://example.com",
+        likes: 4,
+      }
+  
+      await api
+        .post('/api/blogs')
+        .send(newBlog)
+        .expect(201)
+        .expect('Content-Type', /application\/json/)
+  
+      const blogsAtEnd = await helpers.blogsInDb()
+      assert(blogsAtEnd.length === helpers.initialBlogs.length + 1)
+  
+      // check that the new blog is in the response and is the same as newBlog
+      const createdBlog = blogsAtEnd.find(blog => blog.title === newBlog.title)
+  
+      assert(createdBlog)
+      assert(createdBlog.title === newBlog.title)
+      assert(createdBlog.author === newBlog.author)
+      assert(createdBlog.url === newBlog.url)
+      assert(createdBlog.likes === newBlog.likes)
+    })
 
-  await api
-    .post('/api/blogs')
-    .send(newBlog)
-    .expect(201)
-    .expect('Content-Type', /application\/json/)
+    test('without likes, default the like to 0', async () => {
+      const newBlog = {
+        title: 'New Blog without likes',
+        author: "New Author",
+        url: "https://example.com"
+      }
 
-  const response = await api.get('/api/blogs')
+      await api
+        .post('/api/blogs')
+        .send(newBlog)
+        .expect(201)
+        .expect('Content-Type', /application\/json/)
 
-  assert(response.body.length === helpers.initialBlogs.length + 1)
+      const blogsAtEnd = await helpers.blogsInDb()
 
-  const createdBlog = response.body.find(blog => blog.title === newBlog.title)
+      const createdBlog = blogsAtEnd.find(blog => blog.title === newBlog.title)
+      assert(createdBlog.likes === 0)
+    })
 
-  assert(createdBlog)
-  assert(createdBlog.title === newBlog.title)
-  assert(createdBlog.author === newBlog.author)
-  assert(createdBlog.url === newBlog.url)
-  assert(createdBlog.likes === newBlog.likes)
-})
+    test(`fails with status code 400 if there's no title`, async () => {
+      const newBlogWithoutTitle = {
+        author: "New Author",
+        url: "https://example.com",
+        likes: 0
+      }
 
-test('new blog without likes, default the like to 0', async () => {
-  const newBlog = {
-    title: 'New Blog without likes',
-    author: "New Author",
-    url: "https://example.com"
-  }
+      await api
+        .post('/api/blogs')
+        .send(newBlogWithoutTitle)
+        .expect(400)
 
-  await api
-    .post('/api/blogs')
-    .send(newBlog)
-    .expect(201)
-    .expect('Content-Type', /application\/json/)
+      const blogsAtEnd = await helpers.blogsInDb()
+      assert(blogsAtEnd.length === helpers.initialBlogs.length)
+    })
 
-  const response = await api.get('/api/blogs')
+    test(`fails with status code 400 if there's no url`, async () => {
+      const newBlogWithoutUrl = {
+        title: 'New Blog',
+        author: 'New author',
+        likes: 0
+      }
 
-  const createdBlog = response.body.find(blog => blog.title === newBlog.title)
+      await api
+        .post('/api/blogs')
+        .send(newBlogWithoutUrl)
+        .expect(400)
 
-  assert(createdBlog.likes === 0)
-})
+      const blogsAtEnd = await helpers.blogsInDb()
+      assert(blogsAtEnd.length === helpers.initialBlogs.length)
+    })
+  })
 
-test('new blog without title should get 400 Bad Request', async () => {
-  const newBlogWithoutTitle = {
-    author: "New Author",
-    url: "https://example.com",
-    likes: 0
-  }
+  describe('update of a blog', () => {
+    test('the amount of likes', async () => {
+      const blogsAtStart = await helpers.blogsInDb()
+      const blogToUpdate = blogsAtStart[0]
+      const updatedLikes = 2000
 
-  await api
-    .post('/api/blogs')
-    .send(newBlogWithoutTitle)
-    .expect(400)
+      const updatedBlog = await api
+        .put(`/api/blogs/${blogToUpdate.id}`)
+        .send({ ...blogToUpdate, likes: updatedLikes })
+        .expect(200)
 
-  const response = await api.get('/api/blogs')
+      assert(updatedBlog.body.likes === updatedLikes)
+    })
 
-  assert(response.body.length === helpers.initialBlogs.length)
-})
+    test('fails 404 if blog does not exist', async () => {
+      const badId = await helpers.nonExistingId()
 
-test('new blog without url should get 400 Bad Request', async () => {
-  const newBlogWithoutUrl = {
-    title: 'New Blog',
-    author: 'New author',
-    likes: 0
-  }
+      await api
+        .put(`/api/blogs/${badId}`)
+        .send(helpers.initialBlogs[0])
+        .expect(404)
+    })
+  })
 
-  await api
-    .post('/api/blogs')
-    .send(newBlogWithoutUrl)
-    .expect(400)
+  test('a blog can be deleted', async () => {
+    const blogsAtStart = await helpers.blogsInDb()
+    const blogToDelete = blogsAtStart[0]
 
-  const response = await api.get('/api/blogs')
+    await api
+      .delete(`/api/blogs/${blogToDelete.id}`)
+      .expect(204)
 
-  assert(response.body.length === helpers.initialBlogs.length)
+    const blogsAtEnd = await helpers.blogsInDb()
+    assert(blogsAtEnd.length === blogsAtStart.length - 1)
+
+    assert(!blogsAtEnd.some(blog => blog.id === blogToDelete.id))
+  })
 })
 
 after(async () => {
