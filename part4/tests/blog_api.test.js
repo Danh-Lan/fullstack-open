@@ -3,7 +3,7 @@ const { test, after, beforeEach, describe } = require('node:test')
 const mongoose = require('mongoose')
 const supertest = require('supertest')
 const app = require('../app')
-const helpers = require('./test_helper')
+const helper = require('./test_helper')
 const Blog = require('../models/blog')
 
 const api = supertest(app)
@@ -11,7 +11,7 @@ const api = supertest(app)
 describe('when there is initially some blogs saved', () => {
   beforeEach(async () => {
     await Blog.deleteMany({})
-    await Blog.insertMany(helpers.initialBlogs)
+    await Blog.insertMany(helper.initialBlogs)
   })
 
   test('blogs are returned as json', async () => {
@@ -22,7 +22,7 @@ describe('when there is initially some blogs saved', () => {
   })
 
   test('all blogs contain id', async () => {
-    const blogs = await helpers.blogsInDb()
+    const blogs = await helper.blogsInDb()
 
     for (let blog of blogs) {
       assert(blog.hasOwnProperty('id'))
@@ -44,8 +44,8 @@ describe('when there is initially some blogs saved', () => {
         .expect(201)
         .expect('Content-Type', /application\/json/)
   
-      const blogsAtEnd = await helpers.blogsInDb()
-      assert(blogsAtEnd.length === helpers.initialBlogs.length + 1)
+      const blogsAtEnd = await helper.blogsInDb()
+      assert(blogsAtEnd.length === helper.initialBlogs.length + 1)
   
       // check that the new blog is in the response and is the same as newBlog
       const createdBlog = blogsAtEnd.find(blog => blog.title === newBlog.title)
@@ -70,7 +70,7 @@ describe('when there is initially some blogs saved', () => {
         .expect(201)
         .expect('Content-Type', /application\/json/)
 
-      const blogsAtEnd = await helpers.blogsInDb()
+      const blogsAtEnd = await helper.blogsInDb()
 
       const createdBlog = blogsAtEnd.find(blog => blog.title === newBlog.title)
       assert(createdBlog.likes === 0)
@@ -88,8 +88,8 @@ describe('when there is initially some blogs saved', () => {
         .send(newBlogWithoutTitle)
         .expect(400)
 
-      const blogsAtEnd = await helpers.blogsInDb()
-      assert(blogsAtEnd.length === helpers.initialBlogs.length)
+      const blogsAtEnd = await helper.blogsInDb()
+      assert(blogsAtEnd.length === helper.initialBlogs.length)
     })
 
     test(`fails with status code 400 if there's no url`, async () => {
@@ -104,14 +104,14 @@ describe('when there is initially some blogs saved', () => {
         .send(newBlogWithoutUrl)
         .expect(400)
 
-      const blogsAtEnd = await helpers.blogsInDb()
-      assert(blogsAtEnd.length === helpers.initialBlogs.length)
+      const blogsAtEnd = await helper.blogsInDb()
+      assert(blogsAtEnd.length === helper.initialBlogs.length)
     })
   })
 
   describe('update of a blog', () => {
     test('the amount of likes', async () => {
-      const blogsAtStart = await helpers.blogsInDb()
+      const blogsAtStart = await helper.blogsInDb()
       const blogToUpdate = blogsAtStart[0]
       const updatedLikes = 2000
 
@@ -124,24 +124,24 @@ describe('when there is initially some blogs saved', () => {
     })
 
     test('fails 404 if blog does not exist', async () => {
-      const badId = await helpers.nonExistingId()
+      const badId = await helper.nonExistingId()
 
       await api
         .put(`/api/blogs/${badId}`)
-        .send(helpers.initialBlogs[0])
+        .send(helper.initialBlogs[0])
         .expect(404)
     })
   })
 
   test('a blog can be deleted', async () => {
-    const blogsAtStart = await helpers.blogsInDb()
+    const blogsAtStart = await helper.blogsInDb()
     const blogToDelete = blogsAtStart[0]
 
     await api
       .delete(`/api/blogs/${blogToDelete.id}`)
       .expect(204)
 
-    const blogsAtEnd = await helpers.blogsInDb()
+    const blogsAtEnd = await helper.blogsInDb()
     assert(blogsAtEnd.length === blogsAtStart.length - 1)
 
     assert(!blogsAtEnd.some(blog => blog.id === blogToDelete.id))
