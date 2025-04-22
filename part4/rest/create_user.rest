@@ -16,12 +16,3 @@ Content-Type: application/json
   "name": "David",
   "password": "root"
 }
-
-### Username less than 3 characters
-POST http://localhost:3003/api/users/
-Content-Type: application/json
-
-{
-  "username": "abcdef",
-  "name": "David",
-}
