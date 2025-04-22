@@ -43,7 +43,7 @@ describe('when there is initially one user in db', () => {
       assert(usernames.includes(newUser.username))
     })
 
-    test('fails with proper statuscode and message if username already taken', async () => {
+    test('fails with proper status code and message if username already taken', async () => {
       const usersAtStart = await helper.usersInDb()
 
       const newUser = {
@@ -64,7 +64,7 @@ describe('when there is initially one user in db', () => {
       assert.strictEqual(usersAtEnd.length, usersAtStart.length)
     })
 
-    test('fails with proper statuscode and message if username does not exist', async () => {
+    test('fails with proper status code and message if username does not exist', async () => {
       const usersAtStart = await helper.usersInDb()
 
       const newUser = {
@@ -84,7 +84,7 @@ describe('when there is initially one user in db', () => {
       assert.strictEqual(usersAtEnd.length, usersAtStart.length)
     })
 
-    test('fails with proper statuscode and message if password does not exist', async () => {
+    test('fails with proper status code and message if password does not exist', async () => {
       const usersAtStart = await helper.usersInDb()
 
       const newUser = {
@@ -104,7 +104,7 @@ describe('when there is initially one user in db', () => {
       assert.strictEqual(usersAtEnd.length, usersAtStart.length)
     })
     
-    test('fails with proper statuscode and message if username length < 3', async () => {
+    test('fails with proper status code and message if username length < 3', async () => {
       const usersAtStart = await helper.usersInDb()
 
       const newUser = {
@@ -125,7 +125,7 @@ describe('when there is initially one user in db', () => {
       assert.strictEqual(usersAtEnd.length, usersAtStart.length)
     })
 
-    test('fails with proper statuscode and message if password length < 3', async () => {
+    test('fails with proper status code and message if password length < 3', async () => {
       const usersAtStart = await helper.usersInDb()
 
       const newUser = {
