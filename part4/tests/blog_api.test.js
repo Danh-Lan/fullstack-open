@@ -11,6 +11,7 @@ const User = require('../models/user')
 const api = supertest(app)
 
 let token
+let userId
 
 describe('when there is initially some blogs saved', () => {
   beforeEach(async () => {
@@ -23,7 +24,8 @@ describe('when there is initially some blogs saved', () => {
     const passwordHash = await bcrypt.hash('sekret', 10)
     const user = new User({ username: 'root', passwordHash })
 
-    await user.save()
+    const savedUser = await user.save()
+    userId = savedUser._id.toString()
 
     // login to get the token
     const loginResponse = await api
@@ -146,18 +148,32 @@ describe('when there is initially some blogs saved', () => {
   })
 
   describe('update of a blog', () => {
-    test('the amount of likes', async () => {
+    test('update the amount of likes', async () => {
       const blogsAtStart = await helper.blogsInDb()
       const blogToUpdate = blogsAtStart[0]
       const updatedLikes = 2000
 
-      const updatedBlog = await api
+      const updatedBlog = {
+        title: blogToUpdate.title,
+        author: blogToUpdate.author,
+        url: blogToUpdate.url,
+        likes: updatedLikes,
+        user: userId
+      }
+
+      const response = await api
         .put(`/api/blogs/${blogToUpdate.id}`)
         .set('Authorization', `Bearer ${token}`)
-        .send({ ...blogToUpdate, likes: updatedLikes })
+        .send(updatedBlog)
         .expect(200)
 
-      assert(updatedBlog.body.likes === updatedLikes)
+      console.log('response.body:', response.body)
+      assert(response.body.likes === updatedLikes)
+
+      // Check all other fields still exist
+      assert.strictEqual(response.body.title, blogToUpdate.title)
+      assert.strictEqual(response.body.author, blogToUpdate.author)
+      assert.strictEqual(response.body.url, blogToUpdate.url)
     })
 
     test('fails 404 if blog does not exist', async () => {
