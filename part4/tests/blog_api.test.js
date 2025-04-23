@@ -36,6 +36,7 @@ describe('when there is initially some blogs saved', () => {
   test('blogs are returned as json', async () => {
     await api
       .get('/api/blogs')
+      .set('Authorization', `Bearer ${token}`)
       .expect(200)
       .expect('Content-Type', /application\/json/)
   })
@@ -152,6 +153,7 @@ describe('when there is initially some blogs saved', () => {
 
       const updatedBlog = await api
         .put(`/api/blogs/${blogToUpdate.id}`)
+        .set('Authorization', `Bearer ${token}`)
         .send({ ...blogToUpdate, likes: updatedLikes })
         .expect(200)
 
@@ -163,6 +165,7 @@ describe('when there is initially some blogs saved', () => {
 
       await api
         .put(`/api/blogs/${badId}`)
+        .set('Authorization', `Bearer ${token}`)
         .send(helper.initialBlogs[0])
         .expect(404)
     })
