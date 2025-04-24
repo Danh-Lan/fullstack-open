@@ -167,7 +167,6 @@ describe('when there is initially some blogs saved', () => {
         .send(updatedBlog)
         .expect(200)
 
-      console.log('response.body:', response.body)
       assert(response.body.likes === updatedLikes)
 
       // Check all other fields still exist
