@@ -24,18 +24,27 @@ const App = () => {
   const [notification, setNotification] = useState({ message: null})
 
   useEffect(() => {
-    blogService.getAll().then(blogs =>
-      setBlogs( blogs )
-    )  
-  }, [])
-
-  useEffect(() => {
     const loggedUserJSON = window.localStorage.getItem('loggedBlogappUser')
     if (loggedUserJSON) {
       const user = JSON.parse(loggedUserJSON)
       setUser(user)
       blogService.setToken(user.token)
     }
+  }, [])
+
+  // sort blogs by descending order of likes
+  const sortBlogs = (blogA, blogB) => { 
+    return blogB.likes - blogA.likes 
+  }
+
+  useEffect(() => {
+    const fetchBlogs = async () => {
+      const blogs = await blogService.getAll()
+      const sortedBlogs = blogs.sort(sortBlogs)
+      setBlogs(sortedBlogs)
+    }
+
+    fetchBlogs()
   }, [])
 
   const notifyWith = (message, isError = false) => {
@@ -80,7 +89,8 @@ const App = () => {
         title, author, url
       })
 
-      setBlogs([...blogs, createdBlog])
+      setBlogs([...blogs, createdBlog].sort(sortBlogs))
+      console.log('createdBlog :', createdBlog)
       setTitle('')
       setAuthor('')
       setUrl('')
@@ -90,6 +100,18 @@ const App = () => {
       notifyWith(`error with the server, please try again`, true)
       console.log('error :', exception.message)
     }
+  }
+
+  const updateBlog = (updatedBlog) => {
+    const updatedBlogs = blogs.map(blog => blog.id === updatedBlog.id ? updatedBlog : blog)
+    updatedBlogs.sort(sortBlogs)
+    setBlogs(updatedBlogs)
+  }
+
+  const removeBlog = (blogId) => {
+    const blogsAfterRemove = blogs.filter(blog => blog.id !== blogId)
+    blogsAfterRemove.sort(sortBlogs)
+    setBlogs(blogsAfterRemove)
   }
 
   if (user === null) {
@@ -125,7 +147,12 @@ const App = () => {
         />
       </Togglable>
       {blogs.map(blog =>
-        <Blog key={blog.id} blog={blog} />
+        <Blog key={blog.id} 
+          blog={blog}
+          updateBlog={updateBlog}
+          removeBlog={removeBlog}
+          user={user}
+        />
       )}
     </div>
   )
