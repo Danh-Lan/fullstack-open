@@ -24,13 +24,7 @@ const App = () => {
   const blogForm = () => (
     <Togglable buttonLabel='new blog' ref={blogFormRef}>
       <BlogForm 
-        title={title}
-        author={author}
-        url={url}
-        handleTitleChange={({ target }) => setTitle(target.value)}
-        handleAuthorChange={({ target }) => setAuthor(target.value)}
-        handleUrlChange={({ target }) => setUrl(target.value)}
-        handleSubmit={handleCreateBlog}
+        handleCreateBlog={handleCreateBlog}
       />
     </Togglable>
   )
@@ -45,14 +39,14 @@ const App = () => {
   }, [])
 
   // sort blogs by descending order of likes
-  const sortBlogs = (blogA, blogB) => { 
+  const sortBlogsByLikes = (blogA, blogB) => { 
     return blogB.likes - blogA.likes 
   }
 
   useEffect(() => {
     const fetchBlogs = async () => {
       const blogs = await blogService.getAll()
-      const sortedBlogs = blogs.sort(sortBlogs)
+      const sortedBlogs = blogs.sort(sortBlogsByLikes)
       setBlogs(sortedBlogs)
     }
 
@@ -93,18 +87,11 @@ const App = () => {
     window.localStorage.removeItem('loggedBlogappUser')
   }
 
-  const handleCreateBlog = async (event) => {
-    event.preventDefault()
-
+  const handleCreateBlog = async (blog) => {
     try {
-      const createdBlog = await blogService.create({
-        title, author, url
-      })
+      const createdBlog = await blogService.create(blog)
 
-      setBlogs([...blogs, createdBlog].sort(sortBlogs))
-      setTitle('')
-      setAuthor('')
-      setUrl('')
+      setBlogs([...blogs, createdBlog].sort(sortBlogsByLikes))
       blogFormRef.current.toggleVisibility()
       
       notifyWith(`a new blog ${createdBlog.title} by ${createdBlog.author} added`)
@@ -116,14 +103,38 @@ const App = () => {
 
   const updateBlog = (updatedBlog) => {
     const updatedBlogs = blogs.map(blog => blog.id === updatedBlog.id ? updatedBlog : blog)
-    updatedBlogs.sort(sortBlogs)
+    updatedBlogs.sort(sortBlogsByLikes)
     setBlogs(updatedBlogs)
   }
 
-  const removeBlog = (blogId) => {
-    const blogsAfterRemove = blogs.filter(blog => blog.id !== blogId)
-    blogsAfterRemove.sort(sortBlogs)
-    setBlogs(blogsAfterRemove)
+  const handleLikeBlog = async (blog) => {
+    const blogToUpdate ={
+      title: blog.title,
+      author: blog.author,
+      url: blog.url,
+      likes: blog.likes + 1,
+      user: blog.user.id
+    }
+
+    try {
+      const updatedBlog = await blogService.update(blog.id, blogToUpdate)
+      updateBlog(updatedBlog)
+    } catch (error) {
+      console.error('Error updating blog:', error)
+    }
+  }
+
+  const handleRemoveBlog = async (blog) => {
+    try {
+      if (window.confirm(`Remove blog ${blog.title} by ${blog.author}`)) {
+        await blogService.remove(blog.id)
+
+        const blogsAfterRemove = blogs.filter(b => b.id !== blog.id)
+        setBlogs(blogsAfterRemove)
+      }
+    } catch (error) {
+      console.error('Error removing blog:', error)
+    }
   }
 
   if (user === null) {
@@ -149,10 +160,10 @@ const App = () => {
       <p>{user.name} logged in<button onClick={handleLogout}>logout</button></p>
       {blogForm()}
       {blogs.map(blog =>
-        <Blog key={blog.id} 
+        <Blog key={blog.id}
           blog={blog}
-          updateBlog={updateBlog}
-          removeBlog={removeBlog}
+          handleLikeBlog={handleLikeBlog}
+          handleRemoveBlog={handleRemoveBlog}
           user={user}
         />
       )}
