@@ -102,12 +102,6 @@ const App = () => {
     }
   }
 
-  const updateBlog = (updatedBlog) => {
-    const updatedBlogs = blogs.map(blog => blog.id === updatedBlog.id ? updatedBlog : blog)
-    updatedBlogs.sort(sortBlogsByLikes)
-    setBlogs(updatedBlogs)
-  }
-
   const handleLikeBlog = async (blog) => {
     const blogToUpdate ={
       title: blog.title,
@@ -119,7 +113,10 @@ const App = () => {
 
     try {
       const updatedBlog = await blogService.update(blog.id, blogToUpdate)
-      updateBlog(updatedBlog)
+      setBlogs((prevBlogs) => {
+        const updatedBlogs = prevBlogs.map(b => b.id === updatedBlog.id ? updatedBlog : b)
+        return updatedBlogs.sort(sortBlogsByLikes)
+      })
     } catch (error) {
       console.error('Error updating blog:', error)
     }
@@ -158,7 +155,7 @@ const App = () => {
     <div>
       <h2>blogs</h2>
       <Notification notification={notification} />
-      <p>{user.name} logged in<button onClick={handleLogout}>logout</button></p>
+      <p>{user.name} logged in<button data-testid='logout-button' onClick={handleLogout}>logout</button></p>
       {blogForm()}
       {blogs.map(blog =>
         <Blog key={blog.id}
