@@ -75,6 +75,7 @@ const App = () => {
       setUser(user)
       setUsername('')
       setPassword('')
+      notifyWith(`welcome ${user.name}`)
     } catch (exception) {
       notifyWith(`wrong username or password`, true)
     }

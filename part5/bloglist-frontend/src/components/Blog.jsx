@@ -12,18 +12,18 @@ const Blog = ({ blog, handleLikeBlog, handleRemoveBlog, user }) => {
   }
   
   return (
-    <div style={blogStyle} className='blog'>
+    <div data-testid='blog' style={blogStyle} className='blog'>
       <div>
         <span data-testid="title">{blog.title}</span>{' '}
         <span data-testid="author">{blog.author}</span>
-        <button data-testid='toggle-visibility' onClick={() => setBlogVisible(!blogVisible)}>
+        <button data-testid='toggle-visibility' type='button' onClick={() => setBlogVisible(!blogVisible)}>
           {blogVisible ? 'hide' : 'show'}
         </button>
       </div>
       {blogVisible && (
         <div>
           <span data-testid="url">{blog.url}</span><br />
-          <span data-testid="likes">likes {blog.likes}</span><button data-testid='like-button' onClick={() => handleLikeBlog(blog)}>like</button><br />
+          <span data-testid="likes">likes {blog.likes}</span><button data-testid='like-button' type='button' onClick={() => handleLikeBlog(blog)}>like</button><br />
           {blog.user.name}<br />
           {(user.name === blog.user.name) && <button onClick={() => handleRemoveBlog(blog)}>remove</button>}
         </div>
