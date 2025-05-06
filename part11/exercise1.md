@@ -1,0 +1,8 @@
+3 points to make : 
+- CI setup : Linting, testing, bulilding. Tools to handle these steps
+- Alternative to Jenkins, GH Actions
+- Self-hosted or cloud-based ?
+
+I will imagine a project in a group of 6 developers, using Java with Maven. We will use Spotless or Checkstyle linter for the linting, and JUnit for testing. Maven's lifecycle will handle building and packaging. From the searching, there are many CI/CD tools other than Jenkins and GitHub Actions: GitLab CI/CD, Azure DevOps, Bamboo, AWS CodePipeline, Terraform, Travis CI, Semaphore, etc. If we want to work exclusively within an ecosystem like AWS/Azure/Atlassian, then using their own tools would be a good choice. We can also host an instance of GitLab and make our own CI/CD; from reading people's experiences, it seems that GitLab CI/CD is enjoyed by many developers.
+
+For a project of 6, the scale would be relatively small, so using a cloud-based service would be a better choice, unless we are part of many teams in a company, in which case it depends on the infrastructure of the company. GitHub Actions is convenient as we would store the project on GitHub. Additionally, Maven plugins like Spotless and Checkstyle can be integrated directly into the CI pipeline to enforce code quality and formatting. JUnit tests can also be executed as part of the pipeline. Ultimately, we will need to choose a tool that most people are comfortable with.
