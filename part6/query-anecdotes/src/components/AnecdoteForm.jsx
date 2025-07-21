@@ -1,13 +1,31 @@
 import { useMutation, useQueryClient } from "@tanstack/react-query"
 import { createAnecdote } from "../requests"
+import { useNotificationDispatch } from "../useNotification"
 
 const AnecdoteForm = () => {
   const queryClient = useQueryClient()
-  
-  const newAnecdoteMutation = useMutation({ 
+  const notificationDispatch = useNotificationDispatch()
+
+  const newAnecdoteMutation = useMutation({
     mutationFn: createAnecdote,
-    onSuccess: () => {
+    onSuccess: (newAnecdote) => {
       queryClient.invalidateQueries({ queryKey: ['anecdotes'] })
+      notificationDispatch({
+        type: 'SET',
+        payload: `anecdote '${newAnecdote.content}' created`
+      })
+      setTimeout(() => {
+        notificationDispatch({ type: 'CLEAR' })
+      }, 5000)
+    }, 
+    onError: () => {
+      notificationDispatch({
+        type: 'SET',
+        payload: `too short anecdote, must have length 5 or more`
+      })
+      setTimeout(() => {
+        notificationDispatch({ type: 'CLEAR' })
+      }, 5000)
     }
   })
 
